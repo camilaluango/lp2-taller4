@@ -15,5 +15,15 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:?Configura POSTGRES_USER en .env}:${POSTGRES_PASSWORD:?Configura POSTGRES_PASSWORD en .env}@database:5432/${POSTGRES_DB:?Configura POSTGRES_DB en .env}
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+
 volumes:
   pgdata:
