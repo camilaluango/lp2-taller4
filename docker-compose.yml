@@ -5,8 +5,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:?Configura POSTGRES_USER en .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configura POSTGRES_PASSWORD en .env}
       POSTGRES_DB: ${POSTGRES_DB:?Configura POSTGRES_DB en .env}
-    ports:
-      - "127.0.0.1:5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -19,8 +17,6 @@ services:
     build: ./api
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:?Configura POSTGRES_USER en .env}:${POSTGRES_PASSWORD:?Configura POSTGRES_PASSWORD en .env}@database:5432/${POSTGRES_DB:?Configura POSTGRES_DB en .env}
-    ports:
-      - "127.0.0.1:8000:8000"
     depends_on:
       database:
         condition: service_healthy
@@ -29,11 +25,17 @@ services:
     build:
       context: ./frontend
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
-    ports:
-      - "127.0.0.1:3000:3000"
+        NEXT_PUBLIC_API_URL: /api
     depends_on:
       - api
+
+  reverse-proxy:
+    build: ./reverse-proxy
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      - api
+      - frontend
 
 volumes:
   pgdata:
