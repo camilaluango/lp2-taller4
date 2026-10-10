@@ -30,15 +30,14 @@ La lógica de normalización está en `lib/inventario.ts` por si necesitas ajust
 
 ## Configuración de la API
 
-La URL base se toma de `NEXT_PUBLIC_API_URL`; si no está definida se usa `http://localhost:8000`.
+La URL base se toma de `NEXT_PUBLIC_API_URL`; si no está definida, se usa la ruta relativa `/api`, adecuada detrás del reverse proxy.
 
 ```bash
 cp .env.example .env.local
-# edita NEXT_PUBLIC_API_URL si tu API está en otra dirección
 ```
 
-- **Antes del proxy:** la API debe permitir CORS desde el origen de la app (p. ej. `http://localhost:3000`).
-- **Con proxy en el mismo origen:** define `NEXT_PUBLIC_API_URL=` (vacía) y las peticiones irán a `/lotes/`, `/perfumes/`, etc. del mismo dominio.
+- **Antes del proxy:** al construir o ejecutar la app, configura `NEXT_PUBLIC_API_URL=http://localhost:8000`; la API debe permitir CORS desde el origen de la app (p. ej. `http://localhost:3000`).
+- **Con proxy en el mismo origen:** usa `NEXT_PUBLIC_API_URL=/api` (el valor predeterminado). Nginx quita el prefijo `/api/` y reenvía las peticiones a las rutas normales de la API.
 
 > `NEXT_PUBLIC_API_URL` se incrusta en el JavaScript del navegador **al construir**. Si la cambias, vuelve a construir la app (o la imagen Docker).
 
@@ -65,14 +64,14 @@ La imagen usa la salida `standalone` de Next.js en una construcción multietapa 
 ### Con Docker
 
 ```bash
-# Construir (URL por defecto: http://localhost:8000)
+# Construir para el proxy (URL por defecto: /api)
 docker build -t perfumeria-inventario .
+
+# Construir para probar antes del proxy
+docker build --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000 -t perfumeria-inventario .
 
 # Construir apuntando a otra API
 docker build --build-arg NEXT_PUBLIC_API_URL=https://api.mi-perfumeria.com -t perfumeria-inventario .
-
-# Construir para usar detrás de un proxy en el mismo origen
-docker build --build-arg NEXT_PUBLIC_API_URL= -t perfumeria-inventario .
 
 # Ejecutar
 docker run --rm -p 3000:3000 perfumeria-inventario
@@ -86,8 +85,8 @@ Abre http://localhost:3000.
 
 ```bash
 docker compose up --build
-# o con otra API:
-NEXT_PUBLIC_API_URL=https://api.mi-perfumeria.com docker compose up --build
+# o para probar antes del proxy:
+NEXT_PUBLIC_API_URL=http://localhost:8000 docker compose up --build
 ```
 
 ## Estructura
